@@ -15,7 +15,7 @@ App web único (`index.html` + `dicas.json`), pronto para hospedar no GitHub Pag
 - **iOS (Safari)**: abrir o site → botão de compartilhar → "Adicionar à Tela de Início". O ícone e o nome "TecDicas" aparecem automaticamente.
 - **Desktop (Chrome/Edge)**: ícone de instalação na barra de endereço.
 
-Isso funciona porque o `manifest.json` e as tags de ícone já estão configurados no `index.html` — não precisa mexer em nada além de publicar os arquivos.
+O ícone já vem embutido dentro do `index.html` e do `manifest.json` (não depende mais da pasta `assets/` estar no ar) — se mesmo assim aparecer um ícone genérico com a letra "T", é sinal de que o navegador ainda está com a versão antiga em cache: feche a aba, limpe o cache do site (ou aguarde alguns minutos) e tente adicionar de novo.
 
 ## 3. Configurar
 
