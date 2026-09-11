@@ -5,6 +5,7 @@
     "categoria": "apps",
     "plataforma": "WhatsApp",
     "descricao": "Use o gerenciador de armazenamento do próprio app para apagar só mídias grandes, mantendo o histórico de mensagens intacto.",
+    "detalhes": "1. Abra o WhatsApp e vá em Configurações → Armazenamento e dados → Gerenciar armazenamento.\n2. Toque em \"Ver tudo\" para listar os chats que mais ocupam espaço.\n3. Entre em cada conversa e selecione apenas vídeos e imagens grandes ou duplicadas.\n4. Confirme a exclusão das mídias — as mensagens de texto continuam intactas.\n\nDica extra: ative o backup automático no Google Drive ou iCloud antes de fazer a limpeza, assim você garante uma cópia das mídias caso precise depois.",
     "link_video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     "capa": "",
     "tags": ["armazenamento", "celular", "backup"],

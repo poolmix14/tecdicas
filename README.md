@@ -33,16 +33,16 @@ const CONFIG = {
 
 ## 4. Trocar a senha do admin
 
-A senha de exemplo é **dicas2026**. Pra trocar, gere o hash SHA-256 da nova senha e cole em `ADMIN_PASSWORD_HASH`.
+A senha do admin já vem configurada como hash SHA-256 em `ADMIN_PASSWORD_HASH` (o texto puro da senha não fica em nenhum arquivo). Pra trocar, gere o hash da nova senha e cole no lugar do atual.
 
 No terminal (com Python instalado):
 ```
 python3 -c "import hashlib; print(hashlib.sha256('SUA-NOVA-SENHA'.encode()).hexdigest())"
 ```
 
-Cole o resultado no lugar do hash atual.
+Cole o resultado no lugar do hash atual, dentro do bloco `CONFIG` do `index.html`.
 
-> Atenção: como o site é estático, qualquer pessoa pode ver o código-fonte (inclusive esse hash). Isso é proteção básica, suficiente pra uso pessoal — não é criptografia forte. Não reutilize uma senha importante aqui.
+> Atenção: como o site é estático, qualquer pessoa pode ver o código-fonte, inclusive esse hash. Isso é proteção básica, suficiente pra uso pessoal — não é criptografia forte. Não reutilize uma senha importante aqui.
 
 ## 5. Gerar o Token do GitHub (para salvar as dicas)
 
@@ -61,9 +61,14 @@ O token não fica salvo em nenhum arquivo do projeto — só na sessão do naveg
 - Digite a senha
 - Cole o token do GitHub (só na primeira vez, ou sempre que não marcar "lembrar")
 - Use **+ Nova dica** pra cadastrar, ou os botões **editar/remover** em cada card
+- Cada dica tem um **resumo curto** (aparece no card da lista) e um campo de **texto completo** opcional (aparece só na página da dica) — pode deixar em branco, curto ou bem detalhado
 
 Cada alteração gera um commit automático no repositório, e o GitHub Pages atualiza o site publicado em poucos segundos.
 
-## 7. Categorias
+## 7. Página da dica
+
+Clicar no título ou na descrição de qualquer card abre a página completa daquela dica (com URL própria, tipo `#dica-abc123`, que pode ser compartilhada). Ali aparecem: o texto completo (ou o resumo, se o texto completo não foi preenchido), o vídeo (incorporado quando é do YouTube, ou um link quando for de outro serviço) e as tags. Clicar na miniatura do vídeo ou em "Assistir" no card continua abrindo o vídeo direto, sem passar pela página da dica.
+
+## 8. Categorias
 
 As categorias ficam definidas no array `CATEGORIES` dentro do `index.html`. Pra adicionar uma nova categoria, adicione um item nesse array com `id`, `label` e uma `color` (pode usar uma nova variável CSS em `:root`).
