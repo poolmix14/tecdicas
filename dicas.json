@@ -1,0 +1,46 @@
+[
+  {
+    "id": "ex001",
+    "titulo": "Como liberar espaço no WhatsApp sem apagar conversas",
+    "categoria": "apps",
+    "plataforma": "WhatsApp",
+    "descricao": "Use o gerenciador de armazenamento do próprio app para apagar só mídias grandes, mantendo o histórico de mensagens intacto.",
+    "link_video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "capa": "",
+    "tags": ["armazenamento", "celular", "backup"],
+    "criado_em": "2026-09-01T12:00:00.000Z"
+  },
+  {
+    "id": "ex002",
+    "titulo": "Atalho para capturar tela em qualquer janela",
+    "categoria": "so",
+    "plataforma": "Windows 11",
+    "descricao": "Win + Shift + S abre a ferramenta de recorte instantaneamente, sem precisar abrir nenhum programa.",
+    "link_video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "capa": "",
+    "tags": ["atalho", "captura de tela"],
+    "criado_em": "2026-09-02T12:00:00.000Z"
+  },
+  {
+    "id": "ex003",
+    "titulo": "Aumentar FPS em jogos configurando o Modo Jogo",
+    "categoria": "jogos",
+    "plataforma": "Windows 11",
+    "descricao": "Ativar o Modo Jogo e desativar a otimização de tela cheia em jogos específicos pode reduzir engasgos em PCs mais fracos.",
+    "link_video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "capa": "",
+    "tags": ["fps", "desempenho", "pc gamer"],
+    "criado_em": "2026-09-03T12:00:00.000Z"
+  },
+  {
+    "id": "ex004",
+    "titulo": "Recuperar aba fechada por engano",
+    "categoria": "sites",
+    "plataforma": "Google Chrome",
+    "descricao": "Ctrl + Shift + T reabre a última aba fechada, e pode ser usado várias vezes seguidas para recuperar várias abas.",
+    "link_video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "capa": "",
+    "tags": ["atalho", "navegador"],
+    "criado_em": "2026-09-04T12:00:00.000Z"
+  }
+]
