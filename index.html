@@ -648,8 +648,8 @@
      CONFIGURAÇÃO — ajuste antes de publicar
      ====================================================== */
   const CONFIG = {
-    GITHUB_OWNER: "SEU-USUARIO",
-    GITHUB_REPO: "SEU-REPOSITORIO",
+    GITHUB_OWNER: "poolmix14",
+    GITHUB_REPO: "tecdicas",
     GITHUB_BRANCH: "main",
     GITHUB_FILE_PATH: "dicas.json",
     // hash SHA-256 da senha do admin — troque gerando um novo hash (veja instruções no README)
@@ -1227,6 +1227,12 @@
     });
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
+      if(res.status === 404){
+        throw new Error(`Repositório ou branch não encontrado (verifique GITHUB_OWNER, GITHUB_REPO e GITHUB_BRANCH no CONFIG).`);
+      }
+      if(res.status === 401 || res.status === 403){
+        throw new Error(`Token sem permissão pra gravar neste repositório (gere um token com acesso de "Contents: Read and write").`);
+      }
       throw new Error(err.message || `Erro HTTP ${res.status}`);
     }
     return res.json();
