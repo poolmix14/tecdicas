@@ -46,7 +46,7 @@ Cole o resultado no lugar do hash atual, dentro do bloco `CONFIG` do `index.html
 
 ## 5. Gerar o Token do GitHub (para salvar as dicas)
 
-O modo admin grava as dicas direto no `dicas.json` do repositório usando a API do GitHub. Pra isso você precisa de um **Personal Access Token**:
+O modo admin grava as dicas direto no repositório usando a API do GitHub (também usado pra criar categorias novas e enviar imagens de capa). Pra isso você precisa de um **Personal Access Token**:
 
 1. GitHub → foto de perfil → **Settings**
 2. **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
@@ -71,4 +71,8 @@ Clicar no título ou na descrição de qualquer card abre a página completa daq
 
 ## 8. Categorias
 
-As categorias ficam definidas no array `CATEGORIES` dentro do `index.html`. Pra adicionar uma nova categoria, adicione um item nesse array com `id`, `label` e uma `color` (pode usar uma nova variável CSS em `:root`).
+As categorias padrão ficam definidas no `index.html`, mas você pode criar novas direto pelo formulário de cadastro: no campo "Categoria", escolha **"+ Nova categoria..."**, dê um nome e escolha uma cor. Isso cria (ou atualiza) automaticamente o arquivo `categorias.json` no repositório — não precisa mexer em nada manualmente. Esse arquivo só é criado no primeiro uso; até lá, o app usa as categorias padrão internas.
+
+## 9. Capa por upload
+
+No cadastro de uma dica, além de colar um link de imagem, dá pra **enviar um arquivo direto do computador ou celular** no campo "Ou envie um arquivo". A imagem é enviada pro repositório (pasta `capas/`) via GitHub e o link gerado é salvo automaticamente na dica. Isso só é necessário quando o vídeo não é do YouTube (o YouTube já gera a miniatura sozinho).

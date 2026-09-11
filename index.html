@@ -573,6 +573,16 @@
         <input type="text" id="fPlataforma" placeholder="Ex: Windows 11, PS5, Instagram...">
       </div>
     </div>
+    <div class="field-row" id="novaCategoriaFields" style="display:none;">
+      <div class="field">
+        <label for="fNovaCategoriaLabel">Nome da nova categoria</label>
+        <input type="text" id="fNovaCategoriaLabel" placeholder="Ex: Redes sociais">
+      </div>
+      <div class="field" style="max-width:90px;">
+        <label for="fNovaCategoriaCor">Cor</label>
+        <input type="color" id="fNovaCategoriaCor" value="#3B6E8F" style="padding:2px; height:37px;">
+      </div>
+    </div>
     <div class="field">
       <label for="fDescricao">Resumo curto (aparece no card da lista)</label>
       <textarea id="fDescricao" placeholder="Explique o macete em poucas frases"></textarea>
@@ -582,16 +592,21 @@
       <textarea id="fDetalhes" style="min-height:160px;" placeholder="Pode ser um texto curto ou bem detalhado, com o passo a passo completo. Se deixar em branco, a página usa o resumo curto."></textarea>
       <p class="hint">Aceita textos longos — as quebras de linha que você digitar aqui são mantidas na página da dica.</p>
     </div>
+    <div class="field">
+      <label for="fLinkVideo">Link do vídeo (passo a passo)</label>
+      <input type="text" id="fLinkVideo" placeholder="https://youtube.com/watch?v=...">
+    </div>
     <div class="field-row">
       <div class="field">
-        <label for="fLinkVideo">Link do vídeo (passo a passo)</label>
-        <input type="text" id="fLinkVideo" placeholder="https://youtube.com/watch?v=...">
-      </div>
-      <div class="field">
-        <label for="fCapa">Capa alternativa (opcional)</label>
+        <label for="fCapa">Capa por link (opcional)</label>
         <input type="text" id="fCapa" placeholder="URL de imagem, se não for YouTube">
       </div>
+      <div class="field">
+        <label for="fCapaArquivo">Ou envie um arquivo</label>
+        <input type="file" id="fCapaArquivo" accept="image/*">
+      </div>
     </div>
+    <p class="hint" style="margin-top:-8px;">Só é necessário preencher a capa se o vídeo não for do YouTube. Se enviar um arquivo, ele substitui o link colado ao lado.</p>
     <div class="field">
       <label for="fTags">Tags (separadas por vírgula)</label>
       <input type="text" id="fTags" placeholder="Ex: armazenamento, backup, celular">
@@ -638,10 +653,12 @@
     GITHUB_BRANCH: "main",
     GITHUB_FILE_PATH: "dicas.json",
     // hash SHA-256 da senha do admin — troque gerando um novo hash (veja instruções no README)
-    ADMIN_PASSWORD_HASH: "5b1fefc7774df80a09a2c85197086439370e8dc58b42a036964dc55d7a54cadc"
+    ADMIN_PASSWORD_HASH: "5b1fefc7774df80a09a2c85197086439370e8dc58b42a036964dc55d7a54cadc",
+    GITHUB_CATEGORIES_PATH: "categorias.json",
+    GITHUB_CAPAS_FOLDER: "capas"
   };
 
-  const CATEGORIES = [
+  let CATEGORIES = [
     { id: "jogos",     label: "Jogos",                 color: "var(--cat-jogos)" },
     { id: "so",        label: "Sistemas Operacionais",  color: "var(--cat-so)" },
     { id: "sites",     label: "Sites",                  color: "var(--cat-sites)" },
@@ -649,13 +666,22 @@
     { id: "hardware",  label: "Hardware",               color: "var(--cat-hardware)" },
     { id: "outros",    label: "Outros",                 color: "var(--cat-outros)" }
   ];
-  const catById = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+  function getCat(id){
+    return CATEGORIES.find(c => c.id === id) || CATEGORIES.find(c => c.id === "outros") || CATEGORIES[0];
+  }
+  function slugify(text){
+    let base = normalize(text).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "categoria";
+    let id = base, i = 2;
+    while(CATEGORIES.some(c => c.id === id)){ id = base + "-" + i; i++; }
+    return id;
+  }
 
   /* ======================================================
      ESTADO
      ====================================================== */
   let dicas = [];
   let fileSha = null; // sha atual do dicas.json no GitHub (necessário pra commitar)
+  let categoriasSha = null; // sha atual do categorias.json (se existir)
   let activeCategory = "todos";
   let searchQuery = "";
   let isAdmin = false;
@@ -695,7 +721,7 @@
     const d = dicas.find(x => x.id === id);
     if(!d){ location.hash = ""; return; }
 
-    const cat = catById[d.categoria] || catById.outros;
+    const cat = getCat(d.categoria);
     $("#detailTag").innerHTML = `<span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}`;
     $("#detailTitulo").textContent = d.titulo;
 
@@ -780,6 +806,18 @@
   /* ======================================================
      CARREGAR DADOS
      ====================================================== */
+  async function loadCategorias(){
+    try{
+      const res = await fetch(CONFIG.GITHUB_CATEGORIES_PATH + "?t=" + Date.now());
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data) && data.length) CATEGORIES = data;
+      }
+    }catch(e){
+      // categorias.json ainda não existe — usa a lista padrão embutida no app
+    }
+  }
+
   async function loadDicas(){
     try{
       const res = await fetch(CONFIG.GITHUB_FILE_PATH + "?t=" + Date.now());
@@ -792,6 +830,12 @@
     renderChips();
     render();
     handleRoute();
+  }
+
+  async function init(){
+    await loadCategorias();
+    populateCategoriaSelect();
+    await loadDicas();
   }
 
   /* ======================================================
@@ -827,7 +871,7 @@
     return dicas.filter(d=>{
       if(activeCategory !== "todos" && d.categoria !== activeCategory) return false;
       if(!q) return true;
-      const haystack = normalize([d.titulo, d.descricao, d.plataforma, (d.tags||[]).join(" "), catById[d.categoria]?.label].join(" "));
+      const haystack = normalize([d.titulo, d.descricao, d.plataforma, (d.tags||[]).join(" "), getCat(d.categoria)?.label].join(" "));
       return haystack.includes(q);
     });
   }
@@ -846,7 +890,7 @@
     emptyState.style.display = "none";
 
     grid.innerHTML = list.map(d=>{
-      const cat = catById[d.categoria] || catById.outros;
+      const cat = getCat(d.categoria);
       const ytId = youtubeId(d.link_video);
       let thumbHtml;
       if(ytId){
@@ -1010,7 +1054,15 @@
   const formOverlay = $("#formOverlay");
   const formStatus = $("#formStatus");
   const fCategoria = $("#fCategoria");
-  fCategoria.innerHTML = CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join("");
+
+  function populateCategoriaSelect(){
+    fCategoria.innerHTML = CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join("")
+      + `<option value="__nova__">+ Nova categoria...</option>`;
+  }
+
+  fCategoria.addEventListener("change", ()=>{
+    $("#novaCategoriaFields").style.display = fCategoria.value === "__nova__" ? "flex" : "none";
+  });
 
   $("#btnNovaDica").addEventListener("click", ()=> openForm(null));
   $("#closeAdminModal").addEventListener("click", ()=> formOverlay.classList.remove("open"));
@@ -1024,21 +1076,27 @@
       $("#formTitle").textContent = "Editar dica";
       $("#fTitulo").value = d.titulo || "";
       fCategoria.value = d.categoria || "outros";
+      $("#novaCategoriaFields").style.display = "none";
+      $("#fNovaCategoriaLabel").value = "";
       $("#fPlataforma").value = d.plataforma || "";
       $("#fDescricao").value = d.descricao || "";
       $("#fDetalhes").value = d.detalhes || "";
       $("#fLinkVideo").value = d.link_video || "";
       $("#fCapa").value = d.capa || "";
+      $("#fCapaArquivo").value = "";
       $("#fTags").value = (d.tags||[]).join(", ");
     } else {
       $("#formTitle").textContent = "Nova dica";
       $("#fTitulo").value = "";
       fCategoria.value = "outros";
+      $("#novaCategoriaFields").style.display = "none";
+      $("#fNovaCategoriaLabel").value = "";
       $("#fPlataforma").value = "";
       $("#fDescricao").value = "";
       $("#fDetalhes").value = "";
       $("#fLinkVideo").value = "";
       $("#fCapa").value = "";
+      $("#fCapaArquivo").value = "";
       $("#fTags").value = "";
     }
     formOverlay.classList.add("open");
@@ -1053,40 +1111,81 @@
       showStatus(formStatus, "error", "O título é obrigatório.");
       return;
     }
-    const tagsArr = $("#fTags").value.split(",").map(t=>t.trim()).filter(Boolean);
-    const savedId = editingId;
-
-    if(editingId){
-      const d = dicas.find(x=>x.id===editingId);
-      Object.assign(d, {
-        titulo, descricao, detalhes,
-        categoria: fCategoria.value,
-        plataforma: $("#fPlataforma").value.trim(),
-        link_video: $("#fLinkVideo").value.trim(),
-        capa: $("#fCapa").value.trim(),
-        tags: tagsArr
-      });
-    } else {
-      dicas.push({
-        id: uid(),
-        titulo, descricao, detalhes,
-        categoria: fCategoria.value,
-        plataforma: $("#fPlataforma").value.trim(),
-        link_video: $("#fLinkVideo").value.trim(),
-        capa: $("#fCapa").value.trim(),
-        tags: tagsArr,
-        criado_em: new Date().toISOString()
-      });
+    if(!githubToken){
+      askForToken();
+      showStatus(formStatus, "error", "Cole seu token do GitHub para salvar.");
+      return;
     }
 
-    await commitToGithub(formStatus, ()=>{
-      formOverlay.classList.remove("open");
-      renderChips();
-      render();
-      if(savedId && location.hash === "#dica-" + savedId){
-        openDetail(savedId);
+    const saveBtn = $("#saveDica");
+    saveBtn.disabled = true;
+
+    try{
+      // 1. categoria nova, se for o caso
+      let categoriaId = fCategoria.value;
+      if(categoriaId === "__nova__"){
+        const novoLabel = $("#fNovaCategoriaLabel").value.trim();
+        if(!novoLabel) throw new Error("Digite o nome da nova categoria.");
+        const novaCor = $("#fNovaCategoriaCor").value;
+        categoriaId = slugify(novoLabel);
+        CATEGORIES.push({ id: categoriaId, label: novoLabel, color: novaCor });
+        showStatus(formStatus, "loading", "Salvando nova categoria...");
+        await commitCategorias();
+        populateCategoriaSelect();
+        fCategoria.value = categoriaId;
+        $("#novaCategoriaFields").style.display = "none";
       }
-    });
+
+      // 2. upload da imagem de capa, se um arquivo foi escolhido
+      let capaUrl = $("#fCapa").value.trim();
+      const arquivo = $("#fCapaArquivo").files[0];
+      if(arquivo){
+        showStatus(formStatus, "loading", "Enviando imagem de capa...");
+        capaUrl = await uploadCapaImagem(arquivo);
+      }
+
+      // 3. monta e salva a dica
+      const tagsArr = $("#fTags").value.split(",").map(t=>t.trim()).filter(Boolean);
+      const savedId = editingId;
+
+      if(editingId){
+        const d = dicas.find(x=>x.id===editingId);
+        Object.assign(d, {
+          titulo, descricao, detalhes,
+          categoria: categoriaId,
+          plataforma: $("#fPlataforma").value.trim(),
+          link_video: $("#fLinkVideo").value.trim(),
+          capa: capaUrl,
+          tags: tagsArr
+        });
+      } else {
+        dicas.push({
+          id: uid(),
+          titulo, descricao, detalhes,
+          categoria: categoriaId,
+          plataforma: $("#fPlataforma").value.trim(),
+          link_video: $("#fLinkVideo").value.trim(),
+          capa: capaUrl,
+          tags: tagsArr,
+          criado_em: new Date().toISOString()
+        });
+      }
+
+      showStatus(formStatus, "loading", "Salvando dica...");
+      await commitToGithub(formStatus, ()=>{
+        formOverlay.classList.remove("open");
+        renderChips();
+        render();
+        if(savedId && location.hash === "#dica-" + savedId){
+          openDetail(savedId);
+        }
+      });
+    }catch(e){
+      console.error(e);
+      showStatus(formStatus, "error", "Não foi possível salvar: " + e.message);
+    }finally{
+      saveBtn.disabled = false;
+    }
   });
 
   function removeDica(id){
@@ -1104,42 +1203,69 @@
   /* ======================================================
      GRAVAR NO GITHUB (Contents API)
      ====================================================== */
+  async function githubGetSha(path){
+    try{
+      const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}?ref=${CONFIG.GITHUB_BRANCH}`, {
+        headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" }
+      });
+      if(res.ok){
+        const info = await res.json();
+        return info.sha;
+      }
+    }catch(e){ /* arquivo ainda não existe */ }
+    return null;
+  }
+
+  async function githubPutContent(path, base64Content, message){
+    const sha = await githubGetSha(path);
+    const body = { message, content: base64Content, branch: CONFIG.GITHUB_BRANCH };
+    if(sha) body.sha = sha;
+    const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" },
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.message || `Erro HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  async function commitCategorias(){
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(CATEGORIES, null, 2))));
+    const result = await githubPutContent(CONFIG.GITHUB_CATEGORIES_PATH, content, "Adiciona categoria via painel admin");
+    categoriasSha = result.content.sha;
+    return result;
+  }
+
+  function fileToBase64(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadCapaImagem(file){
+    const base64 = await fileToBase64(file);
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${CONFIG.GITHUB_CAPAS_FOLDER}/${uid()}.${ext}`;
+    const result = await githubPutContent(path, base64, "Upload de capa via painel admin");
+    return result.content.download_url;
+  }
+
   async function commitToGithub(statusEl, onSuccess){
     if(!githubToken){
       askForToken();
       if(statusEl) showStatus(statusEl, "error", "Cole seu token do GitHub para salvar.");
       return;
     }
-    const apiBase = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.GITHUB_FILE_PATH}`;
     if(statusEl) showStatus(statusEl, "loading", "Salvando no GitHub...");
-
     try{
-      // 1. pega o sha atual do arquivo (necessário pra sobrescrever)
-      const getRes = await fetch(apiBase + `?ref=${CONFIG.GITHUB_BRANCH}`, {
-        headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" }
-      });
-      if(getRes.ok){
-        const info = await getRes.json();
-        fileSha = info.sha;
-      }
-
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(dicas, null, 2))));
-      const putRes = await fetch(apiBase, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" },
-        body: JSON.stringify({
-          message: "Atualiza dicas.json via painel admin",
-          content: content,
-          sha: fileSha,
-          branch: CONFIG.GITHUB_BRANCH
-        })
-      });
-
-      if(!putRes.ok){
-        const err = await putRes.json().catch(()=>({}));
-        throw new Error(err.message || `Erro HTTP ${putRes.status}`);
-      }
-      const result = await putRes.json();
+      const result = await githubPutContent(CONFIG.GITHUB_FILE_PATH, content, "Atualiza dicas.json via painel admin");
       fileSha = result.content.sha;
 
       if(statusEl) showStatus(statusEl, "ok", "Salvo! O GitHub Pages atualiza em alguns segundos.");
@@ -1154,7 +1280,7 @@
   /* ======================================================
      INICIALIZAÇÃO
      ====================================================== */
-  loadDicas();
+  init();
 })();
 </script>
 </body>
