@@ -1205,8 +1205,9 @@
      ====================================================== */
   async function githubGetSha(path){
     try{
-      const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}?ref=${CONFIG.GITHUB_BRANCH}`, {
-        headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" }
+      const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}?ref=${CONFIG.GITHUB_BRANCH}&t=${Date.now()}`, {
+        headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" },
+        cache: "no-store"
       });
       if(res.ok){
         const info = await res.json();
@@ -1216,26 +1217,45 @@
     return null;
   }
 
-  async function githubPutContent(path, base64Content, message){
-    const sha = await githubGetSha(path);
+  async function githubPutOnce(path, base64Content, message, sha){
     const body = { message, content: base64Content, branch: CONFIG.GITHUB_BRANCH };
     if(sha) body.sha = sha;
     const res = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" },
+      cache: "no-store",
       body: JSON.stringify(body)
     });
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
+      const msg = err.message || "";
       if(res.status === 404){
         throw new Error(`Repositório ou branch não encontrado (verifique GITHUB_OWNER, GITHUB_REPO e GITHUB_BRANCH no CONFIG).`);
       }
       if(res.status === 401 || res.status === 403){
         throw new Error(`Token sem permissão pra gravar neste repositório (gere um token com acesso de "Contents: Read and write").`);
       }
-      throw new Error(err.message || `Erro HTTP ${res.status}`);
+      const conflito = res.status === 409 || res.status === 422 || /does not match|sha/i.test(msg);
+      const e = new Error(msg || `Erro HTTP ${res.status}`);
+      e.conflito = conflito;
+      throw e;
     }
     return res.json();
+  }
+
+  async function githubPutContent(path, base64Content, message){
+    const sha = await githubGetSha(path);
+    try{
+      return await githubPutOnce(path, base64Content, message, sha);
+    }catch(e){
+      // se foi conflito de versão (arquivo mudou entre o momento de pegar o sha e gravar),
+      // busca o sha mais atual de novo e tenta gravar uma única vez a mais.
+      if(e.conflito){
+        const shaAtual = await githubGetSha(path);
+        return await githubPutOnce(path, base64Content, message, shaAtual);
+      }
+      throw e;
+    }
   }
 
   async function commitCategorias(){
