@@ -1,0 +1,37 @@
+[
+  {
+    "id": "jogos",
+    "label": "Jogos",
+    "color": "var(--cat-jogos)"
+  },
+  {
+    "id": "so",
+    "label": "Sistemas Operacionais",
+    "color": "var(--cat-so)"
+  },
+  {
+    "id": "sites",
+    "label": "Sites",
+    "color": "var(--cat-sites)"
+  },
+  {
+    "id": "apps",
+    "label": "Aplicativos",
+    "color": "var(--cat-apps)"
+  },
+  {
+    "id": "hardware",
+    "label": "Hardware",
+    "color": "var(--cat-hardware)"
+  },
+  {
+    "id": "outros",
+    "label": "Outros",
+    "color": "var(--cat-outros)"
+  },
+  {
+    "id": "celular",
+    "label": "Celular",
+    "color": "#669d34"
+  }
+]
