@@ -216,6 +216,16 @@
     color: var(--ink-soft);
     font-size: 12.5px;
   }
+  .card .thumb.platform{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:#fff;
+  }
+  .card .thumb.platform span{
+    font-size: 13px; font-weight:600; letter-spacing:0.3px;
+  }
+  .card .thumb.platform .play{
+    position:static; opacity:1; background:none;
+  }
   .card-body{
     padding: 14px 16px 16px;
     display:flex;
@@ -315,6 +325,10 @@
   }
   .detail-video-embed iframe{
     position:absolute; inset:0; width:100%; height:100%; border:0;
+  }
+  .detail-video-embed.tiktok, .detail-video-embed.instagram{
+    position:static; padding-top:0; background:none; border-radius:0;
+    display:flex; justify-content:center; overflow:visible;
   }
   .detail-video-link{
     display:inline-flex; align-items:center; gap:10px;
@@ -725,10 +739,29 @@
     $("#detailTag").innerHTML = `<span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}`;
     $("#detailTitulo").textContent = d.titulo;
 
-    const ytId = youtubeId(d.link_video);
+    const plataformaVideo = detectPlatform(d.link_video);
     let videoHtml = "";
-    if(ytId){
+    if(plataformaVideo === "youtube"){
+      const ytId = youtubeId(d.link_video);
       videoHtml = `<div class="detail-video-embed"><iframe src="https://www.youtube.com/embed/${ytId}" title="${escapeHtml(d.titulo)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+    } else if(plataformaVideo === "tiktok"){
+      const tkId = tiktokId(d.link_video);
+      videoHtml = `<div class="detail-video-embed tiktok">
+        <blockquote class="tiktok-embed" cite="${escapeHtml(d.link_video)}" data-video-id="${tkId}" style="max-width:100%;min-width:280px;">
+          <section></section>
+        </blockquote>
+      </div>`;
+      loadEmbedScript("https://www.tiktok.com/embed.js");
+    } else if(plataformaVideo === "instagram"){
+      videoHtml = `<div class="detail-video-embed instagram">
+        <blockquote class="instagram-media" data-instgrm-permalink="${escapeHtml(d.link_video)}" data-instgrm-version="14" style="width:100%;"></blockquote>
+      </div>`;
+      loadEmbedScript("https://www.instagram.com/embed.js");
+    } else if(plataformaVideo === "facebook"){
+      const encoded = encodeURIComponent(d.link_video);
+      videoHtml = `<div class="detail-video-embed facebook">
+        <iframe src="https://www.facebook.com/plugins/video.php?href=${encoded}&show_text=false" title="${escapeHtml(d.titulo)}" style="border:none;overflow:hidden;" scrolling="no" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+      </div>`;
     } else if(d.link_video){
       videoHtml = `<a class="detail-video-link" href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">
         ${d.capa ? `<img src="${escapeHtml(d.capa)}" alt="">` : ""}
@@ -783,6 +816,47 @@
     if(!url) return null;
     const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
     return m ? m[1] : null;
+  }
+
+  function tiktokId(url){
+    if(!url) return null;
+    const m = url.match(/tiktok\.com\/[^/]+\/video\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  function isInstagramUrl(url){
+    return !!(url && /instagram\.com\/(p|reel|tv)\//.test(url));
+  }
+
+  function isFacebookVideoUrl(url){
+    return !!(url && /(facebook\.com|fb\.watch)/.test(url));
+  }
+
+  function detectPlatform(url){
+    if(!url) return null;
+    if(youtubeId(url)) return "youtube";
+    if(tiktokId(url)) return "tiktok";
+    if(isInstagramUrl(url)) return "instagram";
+    if(isFacebookVideoUrl(url)) return "facebook";
+    return "outro";
+  }
+
+  const PLATFORM_LABELS = {
+    youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram",
+    facebook: "Facebook", outro: "Vídeo"
+  };
+  const PLATFORM_COLORS = {
+    youtube: "#CC1F1F", tiktok: "#111111", instagram: "#C0399F",
+    facebook: "#2E4A8F", outro: "#5C616B"
+  };
+
+  function loadEmbedScript(src){
+    document.querySelectorAll(`script[data-embed-src="${src}"]`).forEach(el => el.remove());
+    const s = document.createElement("script");
+    s.src = src + (src.includes("?") ? "&" : "?") + "_=" + Date.now();
+    s.async = true;
+    s.dataset.embedSrc = src;
+    document.body.appendChild(s);
   }
 
   async function sha256Hex(text){
@@ -892,6 +966,7 @@
     grid.innerHTML = list.map(d=>{
       const cat = getCat(d.categoria);
       const ytId = youtubeId(d.link_video);
+      const plataformaVideo = detectPlatform(d.link_video);
       let thumbHtml;
       if(ytId){
         thumbHtml = `<div class="thumb">
@@ -900,6 +975,11 @@
         </div>`;
       } else if(d.capa){
         thumbHtml = `<div class="thumb"><img src="${escapeHtml(d.capa)}" alt=""></div>`;
+      } else if(plataformaVideo && plataformaVideo !== "outro"){
+        thumbHtml = `<div class="thumb platform" style="background:${PLATFORM_COLORS[plataformaVideo]}">
+          <div class="play"><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.25)"/><path d="M10 8l6 4-6 4V8z" fill="white"/></svg></div>
+          <span>${PLATFORM_LABELS[plataformaVideo]}</span>
+        </div>`;
       } else {
         thumbHtml = `<div class="thumb noimg">sem prévia</div>`;
       }

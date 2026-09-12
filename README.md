@@ -67,7 +67,16 @@ Cada alteração gera um commit automático no repositório, e o GitHub Pages at
 
 ## 7. Página da dica
 
-Clicar no título ou na descrição de qualquer card abre a página completa daquela dica (com URL própria, tipo `#dica-abc123`, que pode ser compartilhada). Ali aparecem: o texto completo (ou o resumo, se o texto completo não foi preenchido), o vídeo (incorporado quando é do YouTube, ou um link quando for de outro serviço) e as tags. Clicar na miniatura do vídeo ou em "Assistir" no card continua abrindo o vídeo direto, sem passar pela página da dica.
+Clicar no título ou na descrição de qualquer card abre a página completa daquela dica (com URL própria, tipo `#dica-abc123`, que pode ser compartilhada). Ali aparecem: o texto completo (ou o resumo, se o texto completo não foi preenchido), o vídeo e as tags. Clicar na miniatura do vídeo ou em "Assistir" no card continua abrindo o vídeo direto, sem passar pela página da dica.
+
+**Plataformas de vídeo aceitas no campo "Link do vídeo":**
+- **YouTube** — gera miniatura automática no card e player incorporado na página da dica.
+- **TikTok** — precisa ser o link completo do vídeo (`tiktok.com/@usuario/video/123...`), não o link curto (`vm.tiktok.com/...`). Incorpora o vídeo direto na página.
+- **Instagram** — link de post, reel ou IGTV público (`instagram.com/p/...`, `/reel/...`). Incorpora o vídeo direto na página (não funciona com contas privadas).
+- **Facebook** — link de vídeo público (`facebook.com/.../videos/...` ou `fb.watch/...`). Incorpora o player direto na página.
+- **Qualquer outro link** — funciona como um botão "Assistir vídeo" que abre em outra aba.
+
+Nos cards da lista, quando não é possível gerar miniatura automática (todas as plataformas exceto YouTube, a menos que você preencha uma "Capa"), aparece um card colorido identificando a plataforma (TikTok, Instagram ou Facebook).
 
 ## 8. Categorias
 
