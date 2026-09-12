@@ -33,5 +33,10 @@
     "id": "celular",
     "label": "Celular",
     "color": "#669d34"
+  },
+  {
+    "id": "i-a",
+    "label": "I.A",
+    "color": "#3c071b"
   }
 ]
