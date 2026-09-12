@@ -15,5 +15,21 @@
       "android"
     ],
     "criado_em": "2026-09-12T00:05:35.378Z"
+  },
+  {
+    "id": "mtxmxgyi5s8tu",
+    "titulo": "Verifica se os drivers estão em ordem (Windows)",
+    "descricao": "Esse utilitário do windows verifica se os drivers do seu computador estão em ordem. Muito útil para garantir a integridade e também para descobrir se tem algum driver corrompido.",
+    "detalhes": "",
+    "categoria": "so",
+    "plataforma": "",
+    "link_video": "https://www.instagram.com/reel/Dcvwv9Gh16e/?stkn=emlqanZqNngwYXdw",
+    "capa": "",
+    "tags": [
+      "windows",
+      "drivers",
+      "pc"
+    ],
+    "criado_em": "2026-09-12T00:16:34.842Z"
   }
 ]
