@@ -183,6 +183,30 @@
     gap: 16px;
     margin-top: 10px;
   }
+  .section-title{
+    font-size: 18px;
+    margin: 4px 0 12px;
+  }
+  #recentSection{
+    margin-bottom: 30px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .recent-scroll{
+    display:flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .recent-scroll .card{
+    flex: 0 0 auto;
+    width: 250px;
+    scroll-snap-align: start;
+  }
+  .recent-scroll::-webkit-scrollbar{ height: 6px; }
+  .recent-scroll::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 3px; }
   .card{
     background: var(--card);
     border: 1px solid var(--line);
@@ -360,11 +384,42 @@
     border-radius: 999px;
     color: var(--ink-soft);
   }
+  .detail-reactions{
+    display:flex; flex-wrap:wrap; gap:10px;
+    margin-bottom: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .reaction-btn{
+    display:flex; align-items:center; gap:7px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    padding: 9px 15px;
+    border-radius: 999px;
+  }
+  .reaction-btn:hover{ border-color: var(--ink-soft); }
+  .reaction-btn .reaction-icon{ font-size:15px; line-height:1; }
+  .reaction-btn[aria-pressed="true"]{
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  #btnDislike[aria-pressed="true"]{
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+  .reaction-btn.share{ margin-left: auto; }
+  .reaction-btn.copied{
+    background: var(--ok);
+    border-color: var(--ok);
+    color: #fff;
+  }
   .detail-admin-actions{
     display:none;
     gap: 10px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line);
+    padding-top: 4px;
   }
 
   /* ---------- modal (login / form) ---------- */
@@ -526,6 +581,11 @@
 
 <main>
   <div id="listView">
+    <div id="recentSection" style="display:none;">
+      <h2 class="section-title">Mais recentes</h2>
+      <div id="recentGrid" class="recent-scroll"></div>
+    </div>
+
     <div id="grid"></div>
     <div id="emptyState">
       <h3>Nenhuma dica encontrada</h3>
@@ -541,6 +601,19 @@
       <div id="detailVideo"></div>
       <div id="detailTexto"></div>
       <div class="detail-tags" id="detailTagsList"></div>
+
+      <div class="detail-reactions">
+        <button class="reaction-btn" id="btnLike" aria-pressed="false">
+          <span class="reaction-icon">👍</span> Útil
+        </button>
+        <button class="reaction-btn" id="btnDislike" aria-pressed="false">
+          <span class="reaction-icon">👎</span> Não ajudou
+        </button>
+        <button class="reaction-btn share" id="btnCopiarLink">
+          <span class="reaction-icon">🔗</span> Copiar link
+        </button>
+      </div>
+
       <div class="detail-admin-actions" id="detailAdminActions">
         <button class="btn" id="detailEdit">Editar dica</button>
         <button class="btn" id="detailDel">Remover dica</button>
@@ -705,6 +778,7 @@
   let isAdmin = false;
   let githubToken = null;
   let editingId = null;
+  let currentDetailId = null;
 
   const $ = sel => document.querySelector(sel);
   const grid = $("#grid");
@@ -738,6 +812,8 @@
   function openDetail(id){
     const d = dicas.find(x => x.id === id);
     if(!d){ location.hash = ""; return; }
+    currentDetailId = id;
+    atualizarBotoesReacao(id);
 
     const cat = getCat(d.categoria);
     $("#detailTag").innerHTML = `<span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}`;
@@ -785,6 +861,56 @@
     window.scrollTo(0,0);
   }
   $("#btnVoltarDetail").addEventListener("click", ()=> { location.hash = ""; });
+
+  /* ======================================================
+     REAÇÃO (joinha) — só local no navegador, sem servidor
+     ====================================================== */
+  function reacaoKey(id){ return "tecdicas_reacao_" + id; }
+
+  function atualizarBotoesReacao(id){
+    const atual = localStorage.getItem(reacaoKey(id));
+    $("#btnLike").setAttribute("aria-pressed", atual === "like" ? "true" : "false");
+    $("#btnDislike").setAttribute("aria-pressed", atual === "dislike" ? "true" : "false");
+  }
+
+  function toggleReacao(tipo){
+    if(!currentDetailId) return;
+    const key = reacaoKey(currentDetailId);
+    const atual = localStorage.getItem(key);
+    if(atual === tipo){
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, tipo);
+    }
+    atualizarBotoesReacao(currentDetailId);
+  }
+
+  $("#btnLike").addEventListener("click", ()=> toggleReacao("like"));
+  $("#btnDislike").addEventListener("click", ()=> toggleReacao("dislike"));
+
+  /* ======================================================
+     COPIAR LINK DA DICA
+     ====================================================== */
+  $("#btnCopiarLink").addEventListener("click", async ()=>{
+    const btn = $("#btnCopiarLink");
+    const url = location.href;
+    try{
+      if(!navigator.clipboard || !navigator.clipboard.writeText){
+        throw new Error("Clipboard indisponível");
+      }
+      await navigator.clipboard.writeText(url);
+    }catch(e){
+      window.prompt("Copie o link abaixo:", url);
+      return;
+    }
+    const original = btn.innerHTML;
+    btn.classList.add("copied");
+    btn.innerHTML = `<span class="reaction-icon">✓</span> Link copiado!`;
+    setTimeout(()=>{
+      btn.classList.remove("copied");
+      btn.innerHTML = original;
+    }, 2000);
+  });
 
   /* ======================================================
      UTILITÁRIOS
@@ -936,62 +1062,50 @@
     });
   }
 
-  function render(){
-    const list = getFiltered();
-    resultCount.textContent = list.length === dicas.length
-      ? `${list.length} dica${list.length!==1?'s':''} no total`
-      : `${list.length} de ${dicas.length} dicas`;
-
-    if(list.length === 0){
-      grid.innerHTML = "";
-      emptyState.style.display = "block";
-      return;
+  function cardHtml(d){
+    const cat = getCat(d.categoria);
+    const ytId = youtubeId(d.link_video);
+    const plataformaVideo = detectPlatform(d.link_video);
+    let thumbHtml;
+    if(ytId){
+      thumbHtml = `<div class="thumb">
+        <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="">
+        <div class="play"><svg width="42" height="42" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.35)"/><path d="M10 8l6 4-6 4V8z" fill="white"/></svg></div>
+      </div>`;
+    } else if(d.capa){
+      thumbHtml = `<div class="thumb"><img src="${escapeHtml(d.capa)}" alt=""></div>`;
+    } else if(plataformaVideo && plataformaVideo !== "outro"){
+      thumbHtml = `<div class="thumb platform" style="background:${PLATFORM_COLORS[plataformaVideo]}">
+        <div class="play"><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.25)"/><path d="M10 8l6 4-6 4V8z" fill="white"/></svg></div>
+        <span>${PLATFORM_LABELS[plataformaVideo]}</span>
+      </div>`;
+    } else {
+      thumbHtml = `<div class="thumb noimg">sem prévia</div>`;
     }
-    emptyState.style.display = "none";
 
-    grid.innerHTML = list.map(d=>{
-      const cat = getCat(d.categoria);
-      const ytId = youtubeId(d.link_video);
-      const plataformaVideo = detectPlatform(d.link_video);
-      let thumbHtml;
-      if(ytId){
-        thumbHtml = `<div class="thumb">
-          <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="">
-          <div class="play"><svg width="42" height="42" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.35)"/><path d="M10 8l6 4-6 4V8z" fill="white"/></svg></div>
-        </div>`;
-      } else if(d.capa){
-        thumbHtml = `<div class="thumb"><img src="${escapeHtml(d.capa)}" alt=""></div>`;
-      } else if(plataformaVideo && plataformaVideo !== "outro"){
-        thumbHtml = `<div class="thumb platform" style="background:${PLATFORM_COLORS[plataformaVideo]}">
-          <div class="play"><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.25)"/><path d="M10 8l6 4-6 4V8z" fill="white"/></svg></div>
-          <span>${PLATFORM_LABELS[plataformaVideo]}</span>
-        </div>`;
-      } else {
-        thumbHtml = `<div class="thumb noimg">sem prévia</div>`;
-      }
-
-      return `
-      <div class="card" data-id="${d.id}">
-        ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">${thumbHtml}</a>` : thumbHtml}
-        <div class="card-body" style="border-left:none;">
-          <div class="card-tag"><span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}</div>
-          <div class="card-text" data-open="${d.id}" tabindex="0" role="button" aria-label="Abrir dica completa">
-            <h3>${highlight(d.titulo, searchQuery)}</h3>
-            <p>${highlight(d.descricao, searchQuery)}</p>
-            ${(d.tags && d.tags.length) ? `<div class="card-tags">${d.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}</div>` : ""}
-          </div>
-          <div class="card-footer">
-            ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">Assistir passo a passo →</a>` : `<span></span>`}
-            <div class="card-admin-actions" style="${isAdmin ? 'display:flex;' : ''}">
-              <button class="edit" data-id="${d.id}">editar</button>
-              <button class="del" data-id="${d.id}">remover</button>
-            </div>
+    return `
+    <div class="card" data-id="${d.id}">
+      ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">${thumbHtml}</a>` : thumbHtml}
+      <div class="card-body" style="border-left:none;">
+        <div class="card-tag"><span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}</div>
+        <div class="card-text" data-open="${d.id}" tabindex="0" role="button" aria-label="Abrir dica completa">
+          <h3>${highlight(d.titulo, searchQuery)}</h3>
+          <p>${highlight(d.descricao, searchQuery)}</p>
+          ${(d.tags && d.tags.length) ? `<div class="card-tags">${d.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+        </div>
+        <div class="card-footer">
+          ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">Assistir passo a passo →</a>` : `<span></span>`}
+          <div class="card-admin-actions" style="${isAdmin ? 'display:flex;' : ''}">
+            <button class="edit" data-id="${d.id}">editar</button>
+            <button class="del" data-id="${d.id}">remover</button>
           </div>
         </div>
-      </div>`;
-    }).join("");
+      </div>
+    </div>`;
+  }
 
-    grid.querySelectorAll(".card-text").forEach(el=>{
+  function bindCardEvents(container){
+    container.querySelectorAll(".card-text").forEach(el=>{
       el.addEventListener("click", ()=> navigateToDetail(el.dataset.open));
       el.addEventListener("keydown", e=>{
         if(e.key === "Enter" || e.key === " "){
@@ -1000,12 +1114,47 @@
         }
       });
     });
-    grid.querySelectorAll(".card-admin-actions .edit").forEach(b=>{
+    container.querySelectorAll(".card-admin-actions .edit").forEach(b=>{
       b.addEventListener("click", (e)=>{ e.stopPropagation(); openForm(b.dataset.id); });
     });
-    grid.querySelectorAll(".card-admin-actions .del").forEach(b=>{
+    container.querySelectorAll(".card-admin-actions .del").forEach(b=>{
       b.addEventListener("click", (e)=>{ e.stopPropagation(); removeDica(b.dataset.id); });
     });
+  }
+
+  function renderRecentes(){
+    const secao = $("#recentSection");
+    const mostrar = searchQuery === "" && activeCategory === "todos" && dicas.length > 0;
+    if(!mostrar){
+      secao.style.display = "none";
+      return;
+    }
+    const recentes = [...dicas]
+      .sort((a,b) => new Date(b.criado_em || 0) - new Date(a.criado_em || 0))
+      .slice(0, 10);
+    const recentGrid = $("#recentGrid");
+    recentGrid.innerHTML = recentes.map(cardHtml).join("");
+    bindCardEvents(recentGrid);
+    secao.style.display = "block";
+  }
+
+  function render(){
+    const list = getFiltered();
+    resultCount.textContent = list.length === dicas.length
+      ? `${list.length} dica${list.length!==1?'s':''} no total`
+      : `${list.length} de ${dicas.length} dicas`;
+
+    renderRecentes();
+
+    if(list.length === 0){
+      grid.innerHTML = "";
+      emptyState.style.display = "block";
+      return;
+    }
+    emptyState.style.display = "none";
+
+    grid.innerHTML = list.map(cardHtml).join("");
+    bindCardEvents(grid);
   }
 
   /* ======================================================

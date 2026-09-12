@@ -70,11 +70,8 @@ Cada alteração gera um commit automático no repositório, e o GitHub Pages at
 Clicar no título ou na descrição de qualquer card abre a página completa daquela dica (com URL própria, tipo `#dica-abc123`, que pode ser compartilhada). Ali aparecem: o texto completo (ou o resumo, se o texto completo não foi preenchido), o vídeo e as tags. Clicar na miniatura do vídeo ou em "Assistir" no card continua abrindo o vídeo direto, sem passar pela página da dica.
 
 **Plataformas de vídeo aceitas no campo "Link do vídeo":**
-- **YouTube** — gera miniatura automática no card e player incorporado na página da dica.
-- **TikTok** — precisa ser o link completo do vídeo (`tiktok.com/@usuario/video/123...`), não o link curto (`vm.tiktok.com/...`). Incorpora o vídeo direto na página.
-- **Instagram** — link de post, reel ou IGTV público (`instagram.com/p/...`, `/reel/...`). Incorpora o vídeo direto na página (não funciona com contas privadas).
-- **Facebook** — link de vídeo público (`facebook.com/.../videos/...` ou `fb.watch/...`). Incorpora o player direto na página.
-- **Qualquer outro link** — funciona como um botão "Assistir vídeo" que abre em outra aba.
+- **YouTube** — gera miniatura automática no card e fica com o player de verdade incorporado na página da dica.
+- **TikTok, Instagram, Facebook e qualquer outro link** — na página da dica aparece a mesma caixa grande de prévia (capa + botão de play + selo da plataforma), e clicar nela abre o link original em outra aba. No navegador isso abre a página normal da plataforma; no celular, geralmente abre direto no app instalado. Pra Instagram, o post precisa ser público.
 
 Nos cards da lista, quando não é possível gerar miniatura automática (todas as plataformas exceto YouTube, a menos que você preencha uma "Capa"), aparece um card colorido identificando a plataforma (TikTok, Instagram ou Facebook).
 
@@ -85,3 +82,13 @@ As categorias padrão ficam definidas no `index.html`, mas você pode criar nova
 ## 9. Capa por upload
 
 No cadastro de uma dica, além de colar um link de imagem, dá pra **enviar um arquivo direto do computador ou celular** no campo "Ou envie um arquivo". A imagem é enviada pro repositório (pasta `capas/`) via GitHub e o link gerado é salvo automaticamente na dica. Isso só é necessário quando o vídeo não é do YouTube (o YouTube já gera a miniatura sozinho).
+
+## 10. Mais recentes
+
+Na tela inicial, sempre que não há busca nem categoria selecionada, aparece uma faixa "Mais recentes" com as 10 últimas dicas cadastradas (por data de criação), em uma rolagem horizontal. Ela se atualiza sozinha sempre que uma dica é cadastrada, editada ou removida — não precisa configurar nada.
+
+## 11. Reações (👍/👎) e copiar link
+
+Na página de cada dica, qualquer visitante pode marcar **"Útil"** ou **"Não ajudou"**. Essa reação é **só local**, salva no navegador de cada pessoa (não é um contador público nem fica visível pra outros visitantes ou pra você como admin) — serve como um "favorito pessoal" de quem visita.
+
+O botão **"Copiar link"** copia o endereço daquela dica específica (com a URL própria, tipo `.../#dica-abc123`) pra área de transferência, pronto pra colar em qualquer rede social ou conversa.
