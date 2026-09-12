@@ -60,7 +60,11 @@
     "plataforma": "Windows",
     "link_video": "https://www.instagram.com/reel/DbV7L0nqxX0/?stkn=NDU4NGQ1cHJ6OXl6",
     "capa": "https://raw.githubusercontent.com/poolmix14/tecdicas/main/capas/mtyc7ztcxlgxe.jpeg",
-    "tags": [],
+    "tags": [
+      "Sistema operacional",
+      "windows",
+      "otimização"
+    ],
     "criado_em": "2026-09-12T12:04:38.492Z"
   }
 ]
