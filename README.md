@@ -83,9 +83,9 @@ As categorias padrão ficam definidas no `index.html`, mas você pode criar nova
 
 No cadastro de uma dica, além de colar um link de imagem, dá pra **enviar um arquivo direto do computador ou celular** no campo "Ou envie um arquivo". A imagem é enviada pro repositório (pasta `capas/`) via GitHub e o link gerado é salvo automaticamente na dica. Isso só é necessário quando o vídeo não é do YouTube (o YouTube já gera a miniatura sozinho).
 
-## 10. Mais recentes
+## 10. Tela inicial (mais recentes)
 
-Na tela inicial, sempre que não há busca nem categoria selecionada, aparece uma faixa "Mais recentes" com as 10 últimas dicas cadastradas (por data de criação), em uma rolagem horizontal. Ela se atualiza sozinha sempre que uma dica é cadastrada, editada ou removida — não precisa configurar nada.
+Sempre que não há busca nem categoria selecionada, a tela inicial mostra só as **10 dicas mais recentes** (por data de criação), em uma lista vertical normal — role a página pra baixo pra ver todas as 10. Ao cadastrar uma nova dica, ela entra nesse topo e a mais antiga das 10 sai da tela inicial (continua existindo, só não aparece mais ali). Assim que você busca uma palavra-chave ou escolhe uma categoria, a busca passa a considerar **todas** as dicas cadastradas, não só as 10 recentes.
 
 ## 11. Reações (👍/👎) e copiar link
 

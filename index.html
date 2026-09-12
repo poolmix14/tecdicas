@@ -183,30 +183,6 @@
     gap: 16px;
     margin-top: 10px;
   }
-  .section-title{
-    font-size: 18px;
-    margin: 4px 0 12px;
-  }
-  #recentSection{
-    margin-bottom: 30px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid var(--line);
-  }
-  .recent-scroll{
-    display:flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-  }
-  .recent-scroll .card{
-    flex: 0 0 auto;
-    width: 250px;
-    scroll-snap-align: start;
-  }
-  .recent-scroll::-webkit-scrollbar{ height: 6px; }
-  .recent-scroll::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 3px; }
   .card{
     background: var(--card);
     border: 1px solid var(--line);
@@ -581,11 +557,6 @@
 
 <main>
   <div id="listView">
-    <div id="recentSection" style="display:none;">
-      <h2 class="section-title">Mais recentes</h2>
-      <div id="recentGrid" class="recent-scroll"></div>
-    </div>
-
     <div id="grid"></div>
     <div id="emptyState">
       <h3>Nenhuma dica encontrada</h3>
@@ -1054,6 +1025,15 @@
      ====================================================== */
   function getFiltered(){
     const q = normalize(searchQuery);
+    const semFiltroAtivo = !q && activeCategory === "todos";
+
+    // tela inicial (sem busca, sem categoria escolhida): só as 10 mais recentes
+    if(semFiltroAtivo){
+      return [...dicas]
+        .sort((a,b) => new Date(b.criado_em || 0) - new Date(a.criado_em || 0))
+        .slice(0, 10);
+    }
+
     return dicas.filter(d=>{
       if(activeCategory !== "todos" && d.categoria !== activeCategory) return false;
       if(!q) return true;
@@ -1122,29 +1102,17 @@
     });
   }
 
-  function renderRecentes(){
-    const secao = $("#recentSection");
-    const mostrar = searchQuery === "" && activeCategory === "todos" && dicas.length > 0;
-    if(!mostrar){
-      secao.style.display = "none";
-      return;
-    }
-    const recentes = [...dicas]
-      .sort((a,b) => new Date(b.criado_em || 0) - new Date(a.criado_em || 0))
-      .slice(0, 10);
-    const recentGrid = $("#recentGrid");
-    recentGrid.innerHTML = recentes.map(cardHtml).join("");
-    bindCardEvents(recentGrid);
-    secao.style.display = "block";
-  }
-
   function render(){
     const list = getFiltered();
-    resultCount.textContent = list.length === dicas.length
-      ? `${list.length} dica${list.length!==1?'s':''} no total`
-      : `${list.length} de ${dicas.length} dicas`;
+    const semFiltroAtivo = searchQuery === "" && activeCategory === "todos";
 
-    renderRecentes();
+    if(semFiltroAtivo){
+      resultCount.textContent = dicas.length > list.length
+        ? `Mostrando as ${list.length} mais recentes (de ${dicas.length} no total)`
+        : `${list.length} dica${list.length!==1?'s':''} no total`;
+    } else {
+      resultCount.textContent = `${list.length} de ${dicas.length} dicas`;
+    }
 
     if(list.length === 0){
       grid.innerHTML = "";
