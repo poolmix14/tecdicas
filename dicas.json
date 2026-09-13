@@ -175,7 +175,11 @@
     "plataforma": "Windows",
     "link_video": "https://www.youtube.com/watch?v=ZXWyhD-ZdME",
     "capa": "",
-    "tags": [],
+    "tags": [
+      "windows",
+      "boot",
+      "formatação"
+    ],
     "criado_em": "2026-09-13T19:45:22.923Z"
   }
 ]
