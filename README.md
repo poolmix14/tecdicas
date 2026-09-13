@@ -57,13 +57,13 @@ O token não fica salvo em nenhum arquivo do projeto — só na sessão do naveg
 
 ## 6. Usar o modo admin
 
-- Clique em **Admin** no canto superior direito
+- Clique no **logo** do TecDicas, no canto superior esquerdo (é o acesso disfarçado ao admin — não tem um botão "Admin" visível de propósito)
 - Digite a senha
 - Cole o token do GitHub (só na primeira vez, ou sempre que não marcar "lembrar")
 - Use **+ Nova dica** pra cadastrar, ou os botões **editar/remover** em cada card
 - Cada dica tem um **resumo curto** (aparece no card da lista) e um campo de **texto completo** opcional (aparece só na página da dica) — pode deixar em branco, curto ou bem detalhado
 
-Cada alteração gera um commit automático no repositório, e o GitHub Pages atualiza o site publicado em poucos segundos.
+Cada alteração gera um commit automático no repositório, e o GitHub Pages atualiza o site publicado em poucos segundos. Enquanto o modo admin está ativo, o logo fica com um tom verde-escuro por cima — é o único sinal visual de que você está logado (pra sair, clique no logo de novo).
 
 ## 7. Página da dica
 
