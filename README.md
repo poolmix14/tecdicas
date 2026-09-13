@@ -83,9 +83,9 @@ As categorias padrão ficam definidas no `index.html`, mas você pode criar nova
 
 No cadastro de uma dica, além de colar um link de imagem, dá pra **enviar um arquivo direto do computador ou celular** no campo "Ou envie um arquivo". A imagem é enviada pro repositório (pasta `capas/`) via GitHub e o link gerado é salvo automaticamente na dica. Isso só é necessário quando o vídeo não é do YouTube (o YouTube já gera a miniatura sozinho).
 
-## 10. Tela inicial (mais recentes)
+## 10. Tela inicial (Recentes)
 
-Sempre que não há busca nem categoria selecionada, a tela inicial mostra só as **10 dicas mais recentes** (por data de criação), em uma lista vertical normal — role a página pra baixo pra ver todas as 10. Ao cadastrar uma nova dica, ela entra nesse topo e a mais antiga das 10 sai da tela inicial (continua existindo, só não aparece mais ali). Assim que você busca uma palavra-chave ou escolhe uma categoria, a busca passa a considerar **todas** as dicas cadastradas, não só as 10 recentes.
+O app abre sempre na aba **"🕒 Recentes"**, que mostra só as **10 dicas mais novas** (por data de criação), em lista vertical normal. Ao cadastrar uma dica nova, ela entra nesse topo e a mais antiga das 10 sai da aba Recentes (continua existindo, só não aparece mais ali). A aba **"Todos"** é separada e sempre mostra a lista completa. Pra encontrar uma dica específica que já saiu dos recentes, use a busca por palavra-chave (que pesquisa em todas as dicas, mesmo estando na aba Recentes) ou clique na categoria dela.
 
 ## 11. Reações (👍/👎) e copiar link
 
