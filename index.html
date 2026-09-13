@@ -165,6 +165,12 @@
     color: var(--bg-panel);
     border-color: var(--ink);
   }
+  .chip-toggle{
+    border-style: dashed;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .chip-toggle:hover{ background: var(--line); }
   .result-count{
     margin: 14px 0 0;
     font-size: 13px;
@@ -998,26 +1004,48 @@
   /* ======================================================
      RENDER — chips de categoria
      ====================================================== */
+  const LIMITE_CHIPS = 15;
+  let categoriasExpandidas = false;
+
   function renderChips(){
     const counts = {};
     dicas.forEach(d => counts[d.categoria] = (counts[d.categoria]||0)+1);
 
+    const totalChips = CATEGORIES.length + 1; // +1 do "Todos"
+    const precisaLimitar = totalChips > LIMITE_CHIPS && !categoriasExpandidas;
+    const categoriasVisiveis = precisaLimitar ? CATEGORIES.slice(0, LIMITE_CHIPS - 1) : CATEGORIES;
+
     let html = `<button class="chip ${activeCategory==='todos'?'active':''}" data-cat="todos">Todos (${dicas.length})</button>`;
-    CATEGORIES.forEach(c => {
+    categoriasVisiveis.forEach(c => {
       const n = counts[c.id] || 0;
       html += `<button class="chip ${activeCategory===c.id?'active':''}" data-cat="${c.id}">
         <span class="dot" style="background:${c.color}"></span>${c.label} (${n})
       </button>`;
     });
+
+    if(totalChips > LIMITE_CHIPS){
+      html += categoriasExpandidas
+        ? `<button class="chip chip-toggle" id="chipToggle">− menos</button>`
+        : `<button class="chip chip-toggle" id="chipToggle">···</button>`;
+    }
+
     chipsEl.innerHTML = html;
 
-    chipsEl.querySelectorAll(".chip").forEach(btn=>{
+    chipsEl.querySelectorAll(".chip[data-cat]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         activeCategory = btn.dataset.cat;
         renderChips();
         render();
       });
     });
+
+    const toggleBtn = $("#chipToggle");
+    if(toggleBtn){
+      toggleBtn.addEventListener("click", ()=>{
+        categoriasExpandidas = !categoriasExpandidas;
+        renderChips();
+      });
+    }
   }
 
   /* ======================================================
