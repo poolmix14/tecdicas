@@ -290,13 +290,18 @@
     align-items:center;
     margin-top: 4px;
   }
-  .card-footer a{
+  .card-footer .link-like{
+    background:none;
+    border:none;
+    padding:0;
+    font-family: inherit;
     color: var(--amber-deep);
     font-size: 13.5px;
     font-weight: 600;
     text-decoration:none;
+    cursor:pointer;
   }
-  .card-footer a:hover{ text-decoration: underline; }
+  .card-footer .link-like:hover{ text-decoration: underline; }
   .card-admin-actions{ display:none; gap:8px; }
   .card-admin-actions button{
     border:none; background:none; font-size:12.5px;
@@ -313,8 +318,9 @@
   }
   #emptyState h3{ font-size:18px; color: var(--ink); margin-bottom:6px; }
 
-  .card-text{ cursor:pointer; display:flex; flex-direction:column; gap:8px; }
-  .card-text:focus-visible{ outline: 2px solid var(--amber); outline-offset:3px; border-radius:2px; }
+  .card-open{ cursor:pointer; }
+  .card-open:focus-visible{ outline: 2px solid var(--amber); outline-offset:3px; border-radius:2px; }
+  .card-text{ display:flex; flex-direction:column; gap:8px; }
 
   /* ---------- página de detalhe ---------- */
   #detailView{ display:none; }
@@ -1104,16 +1110,16 @@
 
     return `
     <div class="card" data-id="${d.id}">
-      ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">${thumbHtml}</a>` : thumbHtml}
+      <div class="card-open" data-open="${d.id}" tabindex="0" role="button" aria-label="Abrir dica completa">${thumbHtml}</div>
       <div class="card-body" style="border-left:none;">
         <div class="card-tag"><span class="dot" style="background:${cat.color}"></span>${cat.label}${d.plataforma ? " · " + escapeHtml(d.plataforma) : ""}</div>
-        <div class="card-text" data-open="${d.id}" tabindex="0" role="button" aria-label="Abrir dica completa">
+        <div class="card-open card-text" data-open="${d.id}" tabindex="0" role="button" aria-label="Abrir dica completa">
           <h3>${highlight(d.titulo, searchQuery)}</h3>
           <p>${highlight(d.descricao, searchQuery)}</p>
           ${(d.tags && d.tags.length) ? `<div class="card-tags">${d.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}</div>` : ""}
         </div>
         <div class="card-footer">
-          ${d.link_video ? `<a href="${escapeHtml(d.link_video)}" target="_blank" rel="noopener">Assistir passo a passo →</a>` : `<span></span>`}
+          ${d.link_video ? `<button class="card-open link-like" data-open="${d.id}">Ver dica completa →</button>` : `<span></span>`}
           <div class="card-admin-actions" style="${isAdmin ? 'display:flex;' : ''}">
             <button class="edit" data-id="${d.id}">editar</button>
             <button class="del" data-id="${d.id}">remover</button>
@@ -1124,7 +1130,7 @@
   }
 
   function bindCardEvents(container){
-    container.querySelectorAll(".card-text").forEach(el=>{
+    container.querySelectorAll(".card-open").forEach(el=>{
       el.addEventListener("click", ()=> navigateToDetail(el.dataset.open));
       el.addEventListener("keydown", e=>{
         if(e.key === "Enter" || e.key === " "){
