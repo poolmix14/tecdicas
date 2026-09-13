@@ -38,5 +38,10 @@
     "id": "i-a",
     "label": "I.A",
     "color": "#3c071b"
+  },
+  {
+    "id": "edicao-de-imagem",
+    "label": "Edição de imagem",
+    "color": "#e52abc"
   }
 ]
