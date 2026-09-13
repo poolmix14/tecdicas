@@ -181,5 +181,22 @@
       "formatação"
     ],
     "criado_em": "2026-09-13T19:45:22.923Z"
+  },
+  {
+    "id": "mu09j6vheijjk",
+    "titulo": "COMANDOS do CMD que podem DEIXAR seu PC MAIS RÁPIDO! (+fps +rápido)",
+    "descricao": "Esses comandos do cmd podem salvar seu windows de uma formatação",
+    "detalhes": "segue os comandos abaixo:\n\nsfc /scannow\nDISM /Online /Cleanup-Image /RestoreHealth\nipconfig /flushdns\nnetsh winsock reset\npowercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61\nDisable-MMAgent -MemoryCompression",
+    "categoria": "so",
+    "plataforma": "windows",
+    "link_video": "https://www.youtube.com/watch?v=H_bevuWd5J4",
+    "capa": "",
+    "tags": [
+      "cmd",
+      "windows",
+      "formatar",
+      "otimizar"
+    ],
+    "criado_em": "2026-09-13T20:24:52.109Z"
   }
 ]
