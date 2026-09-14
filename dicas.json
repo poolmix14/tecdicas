@@ -216,5 +216,22 @@
       "drives"
     ],
     "criado_em": "2026-09-13T20:31:02.980Z"
+  },
+  {
+    "id": "mu0jxe5ycc7lt",
+    "titulo": "Linux Mint pode fazer milagre onde o Windows desistiu.",
+    "descricao": "O que eu faço com o meu PC antigo?\". Neste vídeo, eu mostro a solução prática com um Celeron e 2Gb de memória",
+    "detalhes": "Será que 2GB de RAM é lixo eletrônico em 2026? Hoje eu coloco um Celeron antigo na bancada para provar que o Linux Mint pode fazer milagre onde o Windows desistiu.\n\nDepois do sucesso do vídeo sobre o \"Golpe da Memória RAM\", muitos inscritos perguntaram: \"O que eu faço com o meu PC antigo?\". Neste vídeo, eu mostro a solução prática. Fiz a instalação do Linux Mint Cinnamon em um Intel Celeron J1800 com apenas 2GB de RAM.\nMostro desde os ajustes críticos na BIOS (como ativar o modo AHCI), a performance real abrindo OnlyOffice, LibreOffice e navegando no YouTube, até as otimizações de sistema que devolvem a velocidade para a máquina.",
+    "categoria": "so",
+    "plataforma": "Linux",
+    "link_video": "https://youtu.be/yc0jNsVsu_c?is=kKRTdMTTuh11Y-Xg",
+    "capa": "",
+    "tags": [
+      "Linux",
+      "sistema operacional",
+      "2gigas de ram",
+      "celeron"
+    ],
+    "criado_em": "2026-09-14T01:15:50.902Z"
   }
 ]
