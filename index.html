@@ -1650,8 +1650,14 @@
     const cb = e.clipboardData || window.clipboardData;
     const html = cb.getData("text/html");
     const texto = cb.getData("text/plain");
+    const textoTrim = (texto || "").trim();
+    // se o que foi copiado é só um link puro, usa o link mesmo — algumas páginas (como o
+    // GitHub) colam escondida a descrição do site no lugar do endereço de verdade
+    const ehSoUmLink = /^\S+$/.test(textoTrim) && /^(https?:\/\/|www\.)/i.test(textoTrim);
     let limpo;
-    if(html){
+    if(ehSoUmLink){
+      limpo = escapeHtml(textoTrim);
+    } else if(html){
       limpo = sanitizarTextoRico(html, false);
     } else {
       limpo = escapeHtml(texto).replace(/\r?\n/g, "<br>");
