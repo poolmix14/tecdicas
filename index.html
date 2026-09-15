@@ -466,6 +466,73 @@
   .field-row{ display:flex; gap:12px; }
   .field-row .field{ flex:1; }
   .field .hint{ font-size:11.5px; color:#8B876F; margin-top:4px; }
+
+  /* ---------- editor de texto rico (campo "Texto completo") ---------- */
+  .rich-toolbar{
+    display:flex; align-items:center; gap:4px; flex-wrap:wrap;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    padding: 6px 8px;
+  }
+  .rt-btn{
+    background:none;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    width: 30px; height: 28px;
+    color: var(--ink);
+    font-size: 14px;
+    line-height:1;
+  }
+  .rt-btn:hover{ background: var(--bg); border-color: var(--line); }
+  .rt-btn.active{ background: var(--ink); color: #fff; }
+  .rt-size{ font-weight:600; }
+  .rt-sep{ width:1px; height:20px; background:var(--line); margin:0 4px; }
+  .rt-emoji-wrap{ position:relative; }
+  .rt-emoji-panel{
+    display:none;
+    position:absolute;
+    top: 34px; left:0;
+    z-index: 20;
+    width: 240px;
+    max-height: 180px;
+    overflow-y:auto;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    padding:6px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+  }
+  .rt-emoji-panel.open{ display:grid; }
+  .rt-emoji-panel button{
+    background:none; border:none; font-size:17px;
+    padding:4px; border-radius:3px; line-height:1;
+  }
+  .rt-emoji-panel button:hover{ background: var(--bg); }
+  .rich-editor{
+    width:100%;
+    min-height:160px;
+    max-height:340px;
+    overflow-y:auto;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 0 0 3px 3px;
+    background:#fff;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    line-height:1.6;
+    white-space: pre-wrap;
+  }
+  .rich-editor:focus{ outline: 1.5px solid var(--amber); outline-offset:-1px; }
+  .rich-editor:empty:before{
+    content: attr(data-placeholder);
+    color: #8B876F;
+  }
+
   .modal-actions{
     display:flex; justify-content:flex-end; gap:10px; margin-top:18px;
   }
@@ -676,8 +743,22 @@
     </div>
     <div class="field">
       <label for="fDetalhes">Texto completo (aparece na página da dica)</label>
-      <textarea id="fDetalhes" style="min-height:160px;" placeholder="Pode ser um texto curto ou bem detalhado, com o passo a passo completo. Se deixar em branco, a página usa o resumo curto."></textarea>
-      <p class="hint">Aceita textos longos — as quebras de linha que você digitar aqui são mantidas na página da dica.</p>
+      <div class="rich-toolbar">
+        <button type="button" class="rt-btn" id="rtBold" title="Negrito"><b>B</b></button>
+        <button type="button" class="rt-btn" id="rtItalic" title="Itálico"><i>I</i></button>
+        <span class="rt-sep"></span>
+        <button type="button" class="rt-btn rt-size" id="rtSizeP" title="Tamanho pequeno" style="font-size:12px;">A</button>
+        <button type="button" class="rt-btn rt-size" id="rtSizeM" title="Tamanho normal" style="font-size:15px;">A</button>
+        <button type="button" class="rt-btn rt-size" id="rtSizeG" title="Tamanho grande" style="font-size:18px;">A</button>
+        <button type="button" class="rt-btn rt-size" id="rtSizeGG" title="Tamanho muito grande" style="font-size:21px;">A</button>
+        <span class="rt-sep"></span>
+        <div class="rt-emoji-wrap">
+          <button type="button" class="rt-btn" id="rtEmojiBtn" title="Inserir emoji">😀</button>
+          <div class="rt-emoji-panel" id="rtEmojiPanel"></div>
+        </div>
+      </div>
+      <div id="fDetalhes" class="rich-editor" contenteditable="true" data-placeholder="Pode ser um texto curto ou bem detalhado, com o passo a passo completo. Se deixar em branco, a página usa o resumo curto."></div>
+      <p class="hint">Selecione um trecho pra aplicar negrito, itálico ou tamanho. A fonte é sempre a mesma do site — só o estilo do trecho muda. As quebras de linha são mantidas na página da dica.</p>
     </div>
     <div class="field">
       <label for="fLinkVideo">Link do vídeo (passo a passo)</label>
@@ -838,7 +919,7 @@
     $("#detailVideo").innerHTML = videoHtml;
 
     const texto = (d.detalhes && d.detalhes.trim()) ? d.detalhes : d.descricao;
-    $("#detailTexto").innerHTML = linkify(texto);
+    $("#detailTexto").innerHTML = linkifyHtml(sanitizarTextoRico(texto));
 
     $("#detailTagsList").innerHTML = (d.tags||[]).map(t=>`<span>${escapeHtml(t)}</span>`).join("");
 
@@ -943,6 +1024,76 @@
       const href = /^https?:\/\//i.test(match) ? match : "https://" + match;
       return `<a href="${href}" target="_blank" rel="noopener">${match}</a>${trailing}`;
     });
+  }
+
+  // aplica a mesma regra de link em cima de um HTML que já é seguro
+  // (não escapa de novo — usado depois de sanitizarTextoRico)
+  function linkifyHtml(html){
+    return html.replace(/(\bhttps?:\/\/[^\s<]+|\bwww\.[^\s<]+)/gi, (match) => {
+      let trailing = "";
+      const m = match.match(/[).,;:!?'"]+$/);
+      if(m){
+        trailing = m[0];
+        match = match.slice(0, match.length - trailing.length);
+      }
+      if(!match) return trailing;
+      const href = /^https?:\/\//i.test(match) ? match : "https://" + match;
+      return `<a href="${href}" target="_blank" rel="noopener">${match}</a>${trailing}`;
+    });
+  }
+
+  // permite só negrito, itálico e tamanho de fonte (nada de scripts, links
+  // colados de outro lugar, imagens etc.) — usado tanto ao salvar quanto ao exibir
+  const RT_TAGS_PERMITIDAS = new Set(["B","STRONG","I","EM","BR","SPAN"]);
+  const RT_TAGS_BLOCO = new Set(["DIV","P"]);
+
+  function sanitizarTextoRico(html){
+    const temp = document.createElement("div");
+    temp.innerHTML = html || "";
+
+    function limpar(node){
+      Array.from(node.childNodes).forEach(child => {
+        if(child.nodeType === 1){
+          const tag = child.tagName;
+          if(tag === "SCRIPT" || tag === "STYLE" || tag === "IFRAME" || tag === "OBJECT" || tag === "EMBED"){
+            child.remove();
+            return;
+          }
+          limpar(child);
+
+          if(RT_TAGS_BLOCO.has(tag)){
+            const br = document.createElement("br");
+            child.replaceWith(...Array.from(child.childNodes), br);
+            return;
+          }
+
+          if(!RT_TAGS_PERMITIDAS.has(tag)){
+            child.replaceWith(...Array.from(child.childNodes));
+            return;
+          }
+
+          if(tag === "SPAN"){
+            const tamanho = child.style && child.style.fontSize;
+            const valido = tamanho && /^\d+(\.\d+)?px$/.test(tamanho);
+            Array.from(child.attributes).forEach(attr => child.removeAttribute(attr.name));
+            if(valido){
+              child.style.fontSize = tamanho;
+            } else {
+              child.replaceWith(...Array.from(child.childNodes));
+            }
+          } else {
+            Array.from(child.attributes).forEach(attr => child.removeAttribute(attr.name));
+          }
+        } else if(child.nodeType === 8){
+          child.remove();
+        }
+      });
+    }
+
+    limpar(temp);
+    return temp.innerHTML
+      .replace(/(<br>\s*){3,}/gi, "<br><br>")
+      .replace(/(<br>\s*)$/i, "");
   }
 
   function youtubeId(url){
@@ -1106,7 +1257,7 @@
       if(!q) return true;
       const haystack = normalize([d.titulo, d.descricao, d.plataforma, (d.tags||[]).join(" "), getCat(d.categoria)?.label].join(" "));
       return haystack.includes(q);
-    });
+    }).sort((a,b) => new Date(b.criado_em || 0) - new Date(a.criado_em || 0));
   }
 
   function cardHtml(d){
@@ -1319,6 +1470,75 @@
   $("#closeAdminModal").addEventListener("click", ()=> formOverlay.classList.remove("open"));
   $("#cancelForm").addEventListener("click", ()=> formOverlay.classList.remove("open"));
 
+  /* ======================================================
+     BARRA DE FERRAMENTAS DO TEXTO COMPLETO
+     ====================================================== */
+  const fDetalhesEl = $("#fDetalhes");
+
+  // impede que clicar num botão da barra tire o "cursor" de dentro do texto
+  document.querySelectorAll(".rich-toolbar .rt-btn").forEach(btn=>{
+    btn.addEventListener("mousedown", e => e.preventDefault());
+  });
+
+  $("#rtBold").addEventListener("click", ()=>{
+    fDetalhesEl.focus();
+    document.execCommand("bold");
+  });
+  $("#rtItalic").addEventListener("click", ()=>{
+    fDetalhesEl.focus();
+    document.execCommand("italic");
+  });
+
+  function aplicarTamanhoFonte(px){
+    const sel = window.getSelection();
+    if(!sel.rangeCount || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if(!fDetalhesEl.contains(range.commonAncestorContainer)) return;
+    const span = document.createElement("span");
+    span.style.fontSize = px + "px";
+    try{
+      range.surroundContents(span);
+    }catch(e){
+      const conteudo = range.extractContents();
+      span.appendChild(conteudo);
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+  }
+  $("#rtSizeP").addEventListener("click", ()=> aplicarTamanhoFonte(13));
+  $("#rtSizeM").addEventListener("click", ()=> aplicarTamanhoFonte(16));
+  $("#rtSizeG").addEventListener("click", ()=> aplicarTamanhoFonte(20));
+  $("#rtSizeGG").addEventListener("click", ()=> aplicarTamanhoFonte(26));
+
+  // emojis pra inserir no texto
+  const EMOJIS_DISPONIVEIS = ["😀","😁","😂","🤣","😊","😍","🤔","😅","😉","🙂","👍","👎","👏","🙌","🙏","💪","✅","❌","⚠️","🔥","💡","🚀","⭐","🎯","📌","📝","✏️","🔧","⚙️","💻","📱","🖥️","🎮","🌐","🔒","🔑","📊","📈","🕒","📅","💬","🔗","📷","🎥","🎧","🆕","❗","➡️","😎","🤖","👀"];
+  const rtEmojiPanel = $("#rtEmojiPanel");
+  rtEmojiPanel.innerHTML = EMOJIS_DISPONIVEIS.map(e => `<button type="button">${e}</button>`).join("");
+  rtEmojiPanel.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("click", ()=>{
+      fDetalhesEl.focus();
+      document.execCommand("insertText", false, btn.textContent);
+      rtEmojiPanel.classList.remove("open");
+    });
+  });
+  $("#rtEmojiBtn").addEventListener("mousedown", e => e.preventDefault());
+  $("#rtEmojiBtn").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    rtEmojiPanel.classList.toggle("open");
+  });
+  document.addEventListener("click", (e)=>{
+    if(rtEmojiPanel.classList.contains("open") && !rtEmojiPanel.contains(e.target) && e.target.id !== "rtEmojiBtn"){
+      rtEmojiPanel.classList.remove("open");
+    }
+  });
+
+  // remove um <br> solto que fica sozinho quando o campo é esvaziado
+  // (senão o placeholder não reaparece)
+  fDetalhesEl.addEventListener("input", ()=>{
+    if(fDetalhesEl.innerHTML === "<br>") fDetalhesEl.innerHTML = "";
+  });
+
   function openForm(id){
     editingId = id;
     hideStatus(formStatus);
@@ -1331,7 +1551,7 @@
       $("#fNovaCategoriaLabel").value = "";
       $("#fPlataforma").value = d.plataforma || "";
       $("#fDescricao").value = d.descricao || "";
-      $("#fDetalhes").value = d.detalhes || "";
+      $("#fDetalhes").innerHTML = d.detalhes || "";
       $("#fLinkVideo").value = d.link_video || "";
       $("#fCapa").value = d.capa || "";
       $("#fCapaArquivo").value = "";
@@ -1344,7 +1564,7 @@
       $("#fNovaCategoriaLabel").value = "";
       $("#fPlataforma").value = "";
       $("#fDescricao").value = "";
-      $("#fDetalhes").value = "";
+      $("#fDetalhes").innerHTML = "";
       $("#fLinkVideo").value = "";
       $("#fCapa").value = "";
       $("#fCapaArquivo").value = "";
@@ -1357,7 +1577,8 @@
   $("#saveDica").addEventListener("click", async ()=>{
     const titulo = $("#fTitulo").value.trim();
     const descricao = $("#fDescricao").value.trim();
-    const detalhes = $("#fDetalhes").value.trim();
+    const detalhesBruto = $("#fDetalhes").innerHTML.trim();
+    const detalhes = (detalhesBruto === "<br>" || detalhesBruto === "") ? "" : sanitizarTextoRico(detalhesBruto);
     if(!titulo){
       showStatus(formStatus, "error", "O título é obrigatório.");
       return;
