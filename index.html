@@ -512,6 +512,50 @@
     padding:4px; border-radius:3px; line-height:1;
   }
   .rt-emoji-panel button:hover{ background: var(--bg); }
+
+  .rt-color-wrap{ position:relative; }
+  .rt-color-btn{ position:relative; width:34px; }
+  .rt-color-swatch{
+    position:absolute; left:6px; right:6px; bottom:4px;
+    height:3px; border-radius:2px;
+    background: currentColor;
+  }
+  .rt-color-panel{
+    display:none;
+    position:absolute;
+    top: 34px; left:0;
+    z-index: 20;
+    width: 190px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    padding:10px;
+  }
+  .rt-color-panel.open{ display:block; }
+  .rt-color-swatches{
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .rt-color-swatches button{
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.15);
+  }
+  .rt-color-swatches button:hover{ transform: scale(1.12); }
+  .rt-color-panel .rt-color-default{
+    width: 100%;
+    text-align:left;
+    background:none;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .rt-color-panel .rt-color-default:hover{ background: var(--bg); }
   .rich-editor{
     width:100%;
     min-height:160px;
@@ -751,6 +795,11 @@
         <button type="button" class="rt-btn rt-size" id="rtSizeM" title="Tamanho normal" style="font-size:15px;">A</button>
         <button type="button" class="rt-btn rt-size" id="rtSizeG" title="Tamanho grande" style="font-size:18px;">A</button>
         <button type="button" class="rt-btn rt-size" id="rtSizeGG" title="Tamanho muito grande" style="font-size:21px;">A</button>
+        <span class="rt-sep"></span>
+        <div class="rt-color-wrap">
+          <button type="button" class="rt-btn rt-color-btn" id="rtColorBtn" title="Cor do texto">A<span class="rt-color-swatch" id="rtColorSwatch"></span></button>
+          <div class="rt-color-panel" id="rtColorPanel"></div>
+        </div>
         <span class="rt-sep"></span>
         <div class="rt-emoji-wrap">
           <button type="button" class="rt-btn" id="rtEmojiBtn" title="Inserir emoji">😀</button>
@@ -1047,7 +1096,8 @@
   const RT_TAGS_PERMITIDAS = new Set(["B","STRONG","I","EM","BR","SPAN"]);
   const RT_TAGS_BLOCO = new Set(["DIV","P"]);
 
-  function sanitizarTextoRico(html){
+  function sanitizarTextoRico(html, permitirCor){
+    if(permitirCor === undefined) permitirCor = true;
     const temp = document.createElement("div");
     temp.innerHTML = html || "";
 
@@ -1074,11 +1124,13 @@
 
           if(tag === "SPAN"){
             const tamanho = child.style && child.style.fontSize;
-            const valido = tamanho && /^\d+(\.\d+)?px$/.test(tamanho);
+            const tamanhoValido = tamanho && /^\d+(\.\d+)?px$/.test(tamanho);
+            const cor = child.style && child.style.color;
+            const corValida = permitirCor && cor && /^(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i.test(cor.trim());
             Array.from(child.attributes).forEach(attr => child.removeAttribute(attr.name));
-            if(valido){
-              child.style.fontSize = tamanho;
-            } else {
+            if(tamanhoValido) child.style.fontSize = tamanho;
+            if(corValida) child.style.color = cor;
+            if(!tamanhoValido && !corValida){
               child.replaceWith(...Array.from(child.childNodes));
             }
           } else {
@@ -1510,6 +1562,58 @@
   $("#rtSizeG").addEventListener("click", ()=> aplicarTamanhoFonte(20));
   $("#rtSizeGG").addEventListener("click", ()=> aplicarTamanhoFonte(26));
 
+  // cor do texto
+  function aplicarCorTexto(cor){
+    const sel = window.getSelection();
+    if(!sel.rangeCount || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if(!fDetalhesEl.contains(range.commonAncestorContainer)) return;
+    const span = document.createElement("span");
+    span.style.color = cor;
+    try{
+      range.surroundContents(span);
+    }catch(e){
+      const conteudo = range.extractContents();
+      span.appendChild(conteudo);
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+  }
+
+  const CORES_DISPONIVEIS = [
+    "#24261F", "#A64A3B", "#B8862F", "#2E6E64",
+    "#2E4A6E", "#6E5B2E", "#8E3E8E", "#1E88C7",
+    "#C21807", "#0F7A3D", "#B5760E", "#4A4A4A"
+  ];
+  const rtColorPanel = $("#rtColorPanel");
+  rtColorPanel.innerHTML =
+    `<div class="rt-color-swatches">${CORES_DISPONIVEIS.map(c => `<button type="button" style="background:${c}" data-cor="${c}" title="${c}"></button>`).join("")}</div>` +
+    `<button type="button" class="rt-color-default" id="rtColorReset">Remover cor (padrão)</button>`;
+
+  rtColorPanel.querySelectorAll("[data-cor]").forEach(btn=>{
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("click", ()=>{
+      aplicarCorTexto(btn.dataset.cor);
+      $("#rtColorSwatch").style.color = btn.dataset.cor;
+      rtColorPanel.classList.remove("open");
+    });
+  });
+  $("#rtColorReset").addEventListener("mousedown", e => e.preventDefault());
+  $("#rtColorReset").addEventListener("click", ()=>{
+    aplicarCorTexto("inherit");
+    rtColorPanel.classList.remove("open");
+  });
+  $("#rtColorBtn").addEventListener("mousedown", e => e.preventDefault());
+  $("#rtColorBtn").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    rtColorPanel.classList.toggle("open");
+  });
+  document.addEventListener("click", (e)=>{
+    if(rtColorPanel.classList.contains("open") && !rtColorPanel.contains(e.target) && e.target.id !== "rtColorBtn"){
+      rtColorPanel.classList.remove("open");
+    }
+  });
+
   // emojis pra inserir no texto
   const EMOJIS_DISPONIVEIS = ["😀","😁","😂","🤣","😊","😍","🤔","😅","😉","🙂","👍","👎","👏","🙌","🙏","💪","✅","❌","⚠️","🔥","💡","🚀","⭐","🎯","📌","📝","✏️","🔧","⚙️","💻","📱","🖥️","🎮","🌐","🔒","🔑","📊","📈","🕒","📅","💬","🔗","📷","🎥","🎧","🆕","❗","➡️","😎","🤖","👀"];
   const rtEmojiPanel = $("#rtEmojiPanel");
@@ -1537,6 +1641,22 @@
   // (senão o placeholder não reaparece)
   fDetalhesEl.addEventListener("input", ()=>{
     if(fDetalhesEl.innerHTML === "<br>") fDetalhesEl.innerHTML = "";
+  });
+
+  // ao colar texto de outro site, remove qualquer cor/estilo escondido no meio
+  // (é o que causava texto branco invisível ao colar) — mantém só negrito, itálico e tamanho
+  fDetalhesEl.addEventListener("paste", (e)=>{
+    e.preventDefault();
+    const cb = e.clipboardData || window.clipboardData;
+    const html = cb.getData("text/html");
+    const texto = cb.getData("text/plain");
+    let limpo;
+    if(html){
+      limpo = sanitizarTextoRico(html, false);
+    } else {
+      limpo = escapeHtml(texto).replace(/\r?\n/g, "<br>");
+    }
+    document.execCommand("insertHTML", false, limpo);
   });
 
   function openForm(id){
