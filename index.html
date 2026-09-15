@@ -117,6 +117,25 @@
   }
   #btnAdmin.logged::after{ opacity: 0.88; }
 
+  .online-indicator{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-panel);
+  }
+  .online-dot{
+    width:7px; height:7px; border-radius:50%;
+    background: #2E9E5B;
+    box-shadow: 0 0 0 2px rgba(46,158,91,.25);
+    flex-shrink:0;
+  }
+
   /* ---------- busca ---------- */
   .search-wrap{
     max-width: 1040px;
@@ -667,6 +686,9 @@
         <p class="sub">As Dicas de tudo você só acha aqui... Bem Vindo!</p>
       </div>
     </div>
+    <div class="online-indicator" id="onlineIndicator" style="display:none;">
+      <span class="online-dot"></span><span id="onlineCount">0</span> online agora
+    </div>
   </div>
 </header>
 
@@ -872,7 +894,17 @@
     // hash SHA-256 da senha do admin — troque gerando um novo hash (veja instruções no README)
     ADMIN_PASSWORD_HASH: "5b1fefc7774df80a09a2c85197086439370e8dc58b42a036964dc55d7a54cadc",
     GITHUB_CATEGORIES_PATH: "categorias.json",
-    GITHUB_CAPAS_FOLDER: "capas"
+    GITHUB_CAPAS_FOLDER: "capas",
+
+    // "pessoas online agora" via Appwrite (opcional) — deixe os valores abaixo
+    // como estão (com "SEU-...") se não quiser usar esse recurso; o app
+    // simplesmente não mostra o indicador quando não está configurado.
+    // APPWRITE_TABLE_ID é o ID da Table (antigo "Collection") dentro do banco.
+    APPWRITE_ENDPOINT: "https://nyc.cloud.appwrite.io/v1",
+    APPWRITE_PROJECT_ID: "6aa9ac960005d2534469",
+    APPWRITE_DATABASE_ID: "6aa9ac960005d2534469",
+    APPWRITE_TABLE_ID: "6aa9ac960005d2534469",
+    ONLINE_JANELA_SEGUNDOS: 30
   };
 
   let CATEGORIES = [
@@ -1902,9 +1934,77 @@
   }
 
   /* ======================================================
+     PESSOAS ONLINE AGORA (Appwrite, opcional)
+     Cada aba gera um id aleatório (sem cadastro, sem cookie de rastreio) e
+     manda um "sinal de vida" de tempos em tempos. O contador soma quantos
+     sinais chegaram nos últimos segundos — passou disso, some da conta.
+     ====================================================== */
+  const APPWRITE_CONFIGURADO = CONFIG.APPWRITE_PROJECT_ID && !CONFIG.APPWRITE_PROJECT_ID.startsWith("SEU-");
+
+  function appwriteHeaders(){
+    return {
+      "Content-Type": "application/json",
+      "X-Appwrite-Project": CONFIG.APPWRITE_PROJECT_ID
+    };
+  }
+
+  function getSessaoId(){
+    let id = sessionStorage.getItem("tecdicas_sessao");
+    if(!id){
+      id = uid();
+      sessionStorage.setItem("tecdicas_sessao", id);
+    }
+    return id;
+  }
+
+  async function enviarHeartbeatOnline(){
+    const sessaoId = getSessaoId();
+    const agora = new Date().toISOString();
+    const base = `${CONFIG.APPWRITE_ENDPOINT}/tablesdb/${CONFIG.APPWRITE_DATABASE_ID}/tables/${CONFIG.APPWRITE_TABLE_ID}/rows`;
+    try{
+      const resAtualiza = await fetch(`${base}/${sessaoId}`, {
+        method: "PATCH",
+        headers: appwriteHeaders(),
+        body: JSON.stringify({ data: { last_seen: agora } })
+      });
+      if(resAtualiza.status === 404){
+        await fetch(base, {
+          method: "POST",
+          headers: appwriteHeaders(),
+          body: JSON.stringify({ rowId: sessaoId, data: { last_seen: agora } })
+        });
+      }
+    }catch(e){ /* falha silenciosa — não é crítico pro resto do app */ }
+  }
+
+  async function atualizarContadorOnline(){
+    const limite = new Date(Date.now() - CONFIG.ONLINE_JANELA_SEGUNDOS * 1000).toISOString();
+    const queryStr = JSON.stringify({ method: "greaterThan", attribute: "last_seen", values: [limite] });
+    const url = `${CONFIG.APPWRITE_ENDPOINT}/tablesdb/${CONFIG.APPWRITE_DATABASE_ID}/tables/${CONFIG.APPWRITE_TABLE_ID}/rows?queries[]=${encodeURIComponent(queryStr)}&limit=1`;
+    try{
+      const res = await fetch(url, { headers: appwriteHeaders() });
+      if(!res.ok) throw new Error("consulta falhou");
+      const info = await res.json();
+      $("#onlineCount").textContent = info.total;
+      $("#onlineIndicator").style.display = "flex";
+    }catch(e){
+      $("#onlineIndicator").style.display = "none";
+    }
+  }
+
+  function iniciarContadorOnline(){
+    if(!APPWRITE_CONFIGURADO) return;
+    enviarHeartbeatOnline();
+    atualizarContadorOnline();
+    setInterval(enviarHeartbeatOnline, 20000);
+    setInterval(atualizarContadorOnline, 20000);
+  }
+
+  /* ======================================================
      INICIALIZAÇÃO
      ====================================================== */
   init();
+  iniciarContadorOnline();
 })();
 </script>
 </body>
