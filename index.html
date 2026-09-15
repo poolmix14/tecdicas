@@ -370,6 +370,13 @@
     color: var(--ink);
     margin-bottom: 22px;
   }
+  #detailTexto a{
+    color: var(--amber-deep);
+    font-weight: 600;
+    text-decoration: underline;
+    word-break: break-word;
+  }
+  #detailTexto a:hover{ color: var(--ink); }
   .detail-tags{
     display:flex; flex-wrap:wrap; gap:6px; margin-bottom: 26px;
   }
@@ -831,7 +838,7 @@
     $("#detailVideo").innerHTML = videoHtml;
 
     const texto = (d.detalhes && d.detalhes.trim()) ? d.detalhes : d.descricao;
-    $("#detailTexto").textContent = texto;
+    $("#detailTexto").innerHTML = linkify(texto);
 
     $("#detailTagsList").innerHTML = (d.tags||[]).map(t=>`<span>${escapeHtml(t)}</span>`).join("");
 
@@ -920,6 +927,22 @@
   function escapeHtml(str){
     return (str||"").toString()
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function linkify(text){
+    const escaped = escapeHtml(text);
+    return escaped.replace(/(\bhttps?:\/\/[^\s<]+|\bwww\.[^\s<]+)/gi, (match) => {
+      // separa pontuação de final de frase (. , ; : ! ?) que não faz parte do link
+      let trailing = "";
+      const m = match.match(/[).,;:!?'"]+$/);
+      if(m){
+        trailing = m[0];
+        match = match.slice(0, match.length - trailing.length);
+      }
+      if(!match) return trailing;
+      const href = /^https?:\/\//i.test(match) ? match : "https://" + match;
+      return `<a href="${href}" target="_blank" rel="noopener">${match}</a>${trailing}`;
+    });
   }
 
   function youtubeId(url){
